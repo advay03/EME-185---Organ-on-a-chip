@@ -20,7 +20,8 @@ class DevicePanel(ctk.CTkFrame):
         self.temp_label.pack(pady=5)
 
         # heater setpoint
-        self.temp_slider = ctk.CTkSlider(self, from_=20, to=60, command=self.set_temp)
+        self.temp_slider = ctk.CTkSlider(self, from_=20, to=60, command=self.set_temp) # slider
+        #self.temp_entry = ctk.CTkEntry(self, placeholder_text ="Temperature Setpoint")
         self.temp_slider.pack(pady=5)
 
         # pump flow

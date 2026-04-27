@@ -8,7 +8,7 @@ class App(ctk.CTk):
 
         # title + background
         self.title("Organ-on-Chip Control GUI")
-        self.geometry("1000x800")
+        self.geometry("1000x600")
         
         self.container = ctk.CTkFrame(self)
         self.container.pack(fill="both", expand=True, padx=10, pady=10)
@@ -28,5 +28,7 @@ class App(ctk.CTk):
         for i, device in enumerate(self.devices):
             print("CREATING PANEL FOR:", device.name) # troubleshooting
             panel = DevicePanel(self.container, device) # creates ui for all serial connections established
-            panel.grid(row=0, column=i, padx=10, pady=10, sticky="n")
+            panel.grid(row=0, column=i, padx=10, pady=10, sticky="nsew")
+            self.container.grid_rowconfigure(0, minsize=400)
+            self.container.grid_columnconfigure(i, weight=1)
             self.panels.append(panel)
