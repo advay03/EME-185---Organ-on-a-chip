@@ -9,13 +9,13 @@
 // ---------------------------------------------------------------
 // PIN DEFINITIONS
 // ---------------------------------------------------------------
-const int heaterPin = 8;       // moved off pins used by steppers
+const int heaterPin = 1;       // moved off pins used by steppers
 const int tempPin   = A0;
 
-const int dirPins[]  = {6, 9, 12};
-const int stepPins[] = {7, 10, 13};
-const int uartPins[] = {3, 4, 5};  // FIXED: moved off hardware serial pins 1 and 2
-const int enPins[]   = {A1, A2, A3}; // FIXED: moved off pin 3 conflict with heater
+const int dirPins[]  = {2, 6, 10};
+const int stepPins[] = {3, 7, 11};
+const int uartPins[] = {4, 8, 12};  // FIXED: moved off hardware serial pins 1 and 2
+const int enPins[]   = {5, 9, 13}; // FIXED: moved off pin 3 conflict with heater
 
 // ---------------------------------------------------------------
 // THERMISTOR CONSTANTS
@@ -92,7 +92,7 @@ float calculateSpeed(float flowRate) {
   float area       = PI * pow(tubeID / 2.0, 2);
   float flowVel    = flowRate / area;
   float rpm        = (flowVel / (2.0 * PI * critR)) * 60.0;
-  float stepsPerSec = (rpm / 60.0) * 200.0 * 8;  
+  float stepsPerSec = (rpm / 60.0) * 200.0 * 32;  
   return stepsPerSec;
 }
 
@@ -128,24 +128,24 @@ void setup() {
   uart1.begin(115200);
   driver1.begin();
   driver1.toff(5);
-  driver1.rms_current(600);
-  driver1.microsteps(256);
+  driver1.rms_current(190);
+  driver1.microsteps(32);
   delay(50);
   uart1.end();
 
   uart2.begin(115200);
   driver2.begin();
   driver2.toff(5);
-  driver2.rms_current(600);
-  driver2.microsteps(256);
+  driver2.rms_current(190);
+  driver2.microsteps(32);
   delay(50);
   uart2.end();
 
   uart3.begin(115200);
   driver3.begin();
   driver3.toff(5);
-  driver3.rms_current(600);
-  driver3.microsteps(256);
+  driver3.rms_current(190);
+  driver3.microsteps(32);
   delay(50);
   uart3.end();
 
