@@ -28,8 +28,9 @@ const int   B   = 3950;
 // ---------------------------------------------------------------
 // PUMP GEOMETRY
 // ---------------------------------------------------------------
-const float tubeID = 0.0005;
-const float critR  = 0.00717;
+const float tubeID = 0.0005; // meters
+const float critR  = 0.00717; // meters
+const float k_pump = 1; 
 
 // ---------------------------------------------------------------
 // SERIAL INPUT
@@ -45,9 +46,9 @@ float targetTemp = 37.0;
 // ---------------------------------------------------------------
 // PUMP CONTROL
 // ---------------------------------------------------------------
-float flowRate1 = 1.67e-11;
-float flowRate2 = 1.67e-11;
-float flowRate3 = 1.67e-11;
+float flowRate1 = 1.67e-11; // m^3/s
+float flowRate2 = 1.67e-11; // m^3/s
+float flowRate3 = 1.67e-11; // m^3/s
 bool pump1_on = false;
 bool pump2_on = false;
 bool pump3_on = false;
@@ -87,12 +88,13 @@ float readTempCelsius() {
   return T_kelvin - 273.15;
 }
 
-float calculateSpeed(float flowRate) {
-  if (flowRate == 0) return 0;
-  float area       = PI * pow(tubeID / 2.0, 2);
-  float flowVel    = flowRate / area;
-  float rpm        = (flowVel / (2.0 * PI * critR)) * 60.0;
-  float stepsPerSec = (rpm / 60.0) * 200.0 * 32;  
+float calculateSpeed(float flowRatemlh) {
+  if (flowRatemlh == 0) return 0;
+  float flowRate = k_pump * flowRatemlh / 3.6E12; // m^3/s to microliters/hr times experimental correction factor k
+  float area       = PI * pow(tubeID / 2.0, 2); // m^2
+  float flowVel    = flowRate / area; // m/s
+  float rpm        = (flowVel / (2.0 * PI * critR)) * 60.0; // rev/min
+  float stepsPerSec = (rpm / 60.0) * 200.0 * 32;  // steps/s
   return stepsPerSec;
 }
 
@@ -128,26 +130,45 @@ void setup() {
   uart1.begin(115200);
   driver1.begin();
   driver1.toff(5);
-  driver1.rms_current(190);
+  driver1.rms_current(100);
   driver1.microsteps(32);
-  delay(50);
-  uart1.end();
+  delay(200);
+  //uart1.end();
+
+ /* Serial.print("Connection: ");
+  Serial.println(driver1.test_connection());
+  Serial.print("Microsteps: ");
+  Serial.println(driver1.microsteps());*/
 
   uart2.begin(115200);
   driver2.begin();
   driver2.toff(5);
-  driver2.rms_current(190);
+  driver2.rms_current(100);
   driver2.microsteps(32);
-  delay(50);
-  uart2.end();
+  delay(200);
+  //uart2.end();
+
+  /*Serial.print("Connection: ");
+  Serial.println(driver2.test_connection());
+  Serial.print("Microsteps: ");
+  Serial.println(driver2.microsteps());*/
 
   uart3.begin(115200);
   driver3.begin();
   driver3.toff(5);
-  driver3.rms_current(190);
+  driver3.rms_current(100);
   driver3.microsteps(32);
-  delay(50);
-  uart3.end();
+  delay(200);
+  //uart3.end();
+
+  /*Serial.print("Connection: ");
+  Serial.println(driver3.test_connection());
+  Serial.print("Microsteps: ");
+  Serial.println(driver3.microsteps());*/
+
+  Serial.print("Driver1 current: "); Serial.println(driver1.rms_current());
+  Serial.print("Driver2 current: "); Serial.println(driver2.rms_current());
+  Serial.print("Driver3 current: "); Serial.println(driver3.rms_current());
 
   // FIXED: setMaxSpeed must be high enough for 256 microsteps
   pump1.setMaxSpeed(10000);
@@ -184,17 +205,17 @@ void loop() {
         targetTemp = val;
       }
       else if (cmd == "F1") {
-        flowRate1    = val;
+        flowRate1    = val; // microliter/hr
         stepsPerSec1 = calculateSpeed(flowRate1);
         pump1.setSpeed(stepsPerSec1);
       }
       else if (cmd == "F2") {
-        flowRate2    = val;
+        flowRate2    = val; // microliter/hr
         stepsPerSec2 = calculateSpeed(flowRate2);
         pump2.setSpeed(stepsPerSec2);
       }
       else if (cmd == "F3") {
-        flowRate3    = val;
+        flowRate3    = val; // microliter/hr
         stepsPerSec3 = calculateSpeed(flowRate3);
         pump3.setSpeed(stepsPerSec3);
       }
@@ -222,8 +243,8 @@ void loop() {
     tempC    = readTempCelsius();
 
     // Send temp to UI
-    Serial.print("TEMP,");
-    Serial.println(tempC);
+    //Serial.print("TEMP,");
+    //Serial.println(tempC);
   }
 
   // Heater hysteresis control
