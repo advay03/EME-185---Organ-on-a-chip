@@ -1,0 +1,10 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment
+organ_gui/
+venv/
+
+# Environment variables (optional but recommended)
+.env
