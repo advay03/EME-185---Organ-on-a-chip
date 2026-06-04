@@ -41,7 +41,7 @@ bool stringComplete  = false;
 // ---------------------------------------------------------------
 // TEMPERATURE CONTROL
 // ---------------------------------------------------------------
-float targetTemp = 37.0;
+float targetTemp = 0;
 
 // ---------------------------------------------------------------
 // PUMP CONTROL
@@ -98,15 +98,32 @@ float calculateSpeed(float flowRatemlh) {
   return stepsPerSec;
 }
 
-void serialEvent() {
+void handleSerial() {
   while (Serial.available()) {
-    char inChar = (char)Serial.read();
-    if (inChar == '\n') {
+    char c = Serial.read();
+
+    if (c == '\n') {
       stringComplete = true;
     } else {
-      inputString += inChar;
+      inputString += c;
     }
   }
+}
+
+// ---------------------------------------------------------------
+// SERIAL BUFFER
+// ---------------------------------------------------------------
+//String inputString = "";
+//bool stringComplete = false;
+
+// ---------------------------------------------------------------
+// ACK FUNCTION (NEW)
+// ---------------------------------------------------------------
+void sendACK(String cmd, float val) {
+  Serial.print("ACK,");
+  Serial.print(cmd);
+  Serial.print(",");
+  Serial.println(val);
 }
 
 // ---------------------------------------------------------------
@@ -114,7 +131,8 @@ void serialEvent() {
 // ---------------------------------------------------------------
 void setup() {
   Serial.begin(115200);
-  inputString.reserve(50);
+  delay(1000);
+  Serial.println("Arduino Ready");
 
   // Pin modes
   pinMode(heaterPin, OUTPUT);
@@ -192,6 +210,7 @@ void setup() {
 // ---------------------------------------------------------------
 void loop() {
 
+  handleSerial();
   // Handle serial commands from UI
   if (stringComplete) {
     int commaIndex = inputString.indexOf(',');
@@ -203,33 +222,40 @@ void loop() {
 
       if (cmd == "T") {
         targetTemp = val;
+        sendACK(cmd, val);
       }
       else if (cmd == "F1") {
         flowRate1    = val; // microliter/hr
+        sendACK(cmd, val);
         stepsPerSec1 = calculateSpeed(flowRate1);
         pump1.setSpeed(stepsPerSec1);
       }
       else if (cmd == "F2") {
         flowRate2    = val; // microliter/hr
+        sendACK(cmd, val);
         stepsPerSec2 = calculateSpeed(flowRate2);
         pump2.setSpeed(stepsPerSec2);
       }
       else if (cmd == "F3") {
         flowRate3    = val; // microliter/hr
+        sendACK(cmd, val);
         stepsPerSec3 = calculateSpeed(flowRate3);
         pump3.setSpeed(stepsPerSec3);
       }
       else if (cmd == "P1") {
         pump1_on = (val > 0);
         digitalWrite(enPins[0], pump1_on ? LOW : HIGH);
+        sendACK(cmd, val);
       }
       else if (cmd == "P2") {
         pump2_on = (val > 0);
         digitalWrite(enPins[1], pump2_on ? LOW : HIGH);
+        sendACK(cmd, val);
       }
       else if (cmd == "P3") {
         pump3_on = (val > 0);
         digitalWrite(enPins[2], pump3_on ? LOW : HIGH);
+        sendACK(cmd, val);
       }
     }
 
@@ -244,17 +270,25 @@ void loop() {
 
     // Send temp to UI
     //Serial.print("TEMP,");
-    //Serial.println(tempC);
+    Serial.println(tempC);
   }
+
+  float error = targetTemp - tempC;
+  float kp = 25; 
+  int pwmValue = constrain(kp*error, 0, 51);
 
   // Heater hysteresis control
   if (tempC < targetTemp - 0.2) {
-    digitalWrite(heaterPin, HIGH);
+    digitalWrite(heaterPin, pwmValue);
   }
   if (tempC > targetTemp + 0.2) {
     digitalWrite(heaterPin, LOW);
   }
 
+  pump1.setSpeed(stepsPerSec1);
+  pump2.setSpeed(stepsPerSec2);
+  pump3.setSpeed(stepsPerSec3);
+  
   // Run pumps
   if (pump1_on) pump1.runSpeed();
   if (pump2_on) pump2.runSpeed();
