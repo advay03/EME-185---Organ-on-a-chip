@@ -12,10 +12,10 @@
 const int heaterPin = 2;       // moved off pins used by steppers
 const int tempPin   = A0;
 
-// const int dirPins[]  = {2, 6, 10};
+const int dirPins[]  = {5, 9, 13};
 const int stepPins[] = {3, 7, 11};
 const int uartPins[] = {4, 8, 12};  // FIXED: moved off hardware serial pins 1 and 2
-const int enPins[]   = {5, 9, 13}; // FIXED: moved off pin 3 conflict with heater
+const int enPins[]   = {A1, A2, A3}; // FIXED: moved off pin 3 conflict with heater
 
 // ---------------------------------------------------------------
 // THERMISTOR CONSTANTS
@@ -41,7 +41,7 @@ bool stringComplete  = false;
 // ---------------------------------------------------------------
 // TEMPERATURE CONTROL
 // ---------------------------------------------------------------
-float targetTemp = 37.0;
+float targetTemp = 0;
 
 // ---------------------------------------------------------------
 // PUMP CONTROL
@@ -113,8 +113,8 @@ void handleSerial() {
 // ---------------------------------------------------------------
 // SERIAL BUFFER
 // ---------------------------------------------------------------
-String inputString = "";
-bool stringComplete = false;
+//String inputString = "";
+//bool stringComplete = false;
 
 // ---------------------------------------------------------------
 // ACK FUNCTION (NEW)
@@ -269,18 +269,26 @@ void loop() {
     tempC    = readTempCelsius();
 
     // Send temp to UI
-    Serial.print("TEMP,");
+    //Serial.print("TEMP,");
     Serial.println(tempC);
   }
 
+  float error = targetTemp - tempC;
+  float kp = 25; 
+  int pwmValue = constrain(kp*error, 0, 51);
+
   // Heater hysteresis control
   if (tempC < targetTemp - 0.2) {
-    digitalWrite(heaterPin, HIGH);
+    digitalWrite(heaterPin, pwmValue);
   }
   if (tempC > targetTemp + 0.2) {
     digitalWrite(heaterPin, LOW);
   }
 
+  pump1.setSpeed(stepsPerSec1);
+  pump2.setSpeed(stepsPerSec2);
+  pump3.setSpeed(stepsPerSec3);
+  
   // Run pumps
   if (pump1_on) pump1.runSpeed();
   if (pump2_on) pump2.runSpeed();
